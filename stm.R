@@ -46,6 +46,7 @@ lda_fit<- stm(docs2, vocab2, 10, seed = 8675309)
 ##use that function to label the topics
 
 labelTopics(lda_fit)
+# FREX: cohesiveness (words that are similar to each other)
 
 
 ##focusing on the highest probability words, develop a hand label for each of the topics.  
