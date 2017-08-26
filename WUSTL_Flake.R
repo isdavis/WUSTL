@@ -19,6 +19,7 @@ for(z in 1:nrow(flake_norm)){
 
 n.clust<- 3
 set.seed(8675309) ##complicated objective function
+
 k_cluster<- kmeans(flake_norm, centers = n.clust)
 table(k_cluster$cluster)
 

@@ -65,7 +65,6 @@ previousPosRate
 # NA 1.7000000 0.9245283 
 # Obama is more responsive than Romney
 
-
 mod1<- lm(NumNegative~previousPosRate + previousNegRate, debate)
 summary(mod1)
 # not reliable
@@ -73,4 +72,4 @@ mod2<- lm(NumPositive~previousPosRate + previousNegRate, debate)
 summary(mod2)
 # not reliable
 
-# Overall, it is interesting that Obama was more responsive than Romeny during the debate. 
+# Overall, it is interesting that Obama was more responsive than Romeny during the debate.  

@@ -22,41 +22,52 @@ os.chdir("/Users/minheeseo/Dropbox/2017_Classes/Text-Analysis/WUSTL/")
 # read debate text data
 with open("Debate1.html", "r") as source:
     text = source.read()
+text  # check
+type(text)  # str
 
 # we can use p to identify the statement
 # find p by using beautiful soup
 soupText = BeautifulSoup(text).find_all("p")
-
+soupText  # check
 # Not all the statements contain information about the speaker. In order to clean this text data, first, drop unnecessary HTML section
-soupText = soupText[6:477]  # how do I know [6:477]?
+len(soupText)  # 480
+# mannually went through some lines to find the irrelevant part of the text.
+# speech starts from soupText[6] to soupText[476]
+# Q. is there more efficient way?
+soupText = soupText[6:476]
 
-# next, in order to create uninterrupted speech by each speaker, run the following loop.
+# next, in order to create uninterrupted speech by each speaker, run the following loop. The speech is only interrupted when a different speaker has begun.
 
 # create empty list
 statement = []
+# create empty str
 previous = ""
 
-# this loop finds tag in the document and append when the labels are matching
-# if the label (speaker) is not matched, the documents are splited.
-# also check whether there is appluase or crosstalk; if there is appended to previous statements
+# this loop finds tag in the document and append when the labels are matching (when speaker is continously speaking)
+# if the label is not matched, the documents are splited. (when the next speaker is speaking)
+# also check whether there is applause or crosstalk
+
 for tag in soupText:  # find tag in the document
     speechText = tag.get_text()  # find speech by tag in the document
-    debateLabel = re.search('^[A-Z]+:', speechText)  # for each speech, find whether there are capitalized words. Capitalized words are  speakers. Assign it to debateLabel null list.
+    debateLabel = re.search('^[A-Z]+:', speechText)  # for each speech, find whether there are capitalized words in the beginning; ^[A-Z] and with : symbol +: Capitalized words indecate speakers. Assign it to debateLabel null list.
     if debateLabel:
         present = debateLabel.group()  # assign it as a present speaker
         if present != previous:  # if present speaker label is not the same as previous speaker
             statement.append(speechText)  # add a speech to a present speaker name
-            previous = debateLabel.group(0)  # assign the first element of capitalized letters (which is speaker name) as a new object called previous. This indicates the previous speaker.
+            previous = debateLabel.group(0)  # store the first element of capitalized letters (which is a speaker name) as a previous one.
         else:  # if present speaker label is the same as previous speaker label
             last = statement.pop()  # remove the name and add speeches to the previous speaker label.
             statement.append(last + " " + speechText)
-    else:
+    else:  # if there is no speaker name -- when the speaker is continously speaking
         if re.search('\([A-Z]+\)', speechText) == None:  # if speaker label cannot be found, add the speech to the last statement
             last = statement.pop()
             statement.append(last + " " + speechText)
 
-statement  # check if speeches are parsed well.
+statement  # check if speeches are parsed well. It looks good.
+statement[1]
+statement[20]
 
+# Q. do I need to go through this mannually? Or is there more efficient way to check ?
 
 # problem 2: load and use dictionaries
 
@@ -70,9 +81,14 @@ negative  # check
 porter = nltk.stem.PorterStemmer()
 snowball = nltk.stem.SnowballStemmer('english')
 lancaster = nltk.stem.LancasterStemmer()
+# porter: original
+# snowball: computationally faster
+# Lancaster: can be aggressive (=may not be intuitive, hugh trimming). Fastest algorithm.
 
 # create dictionaries using stemmers above
 # first use the following function to load types of words based on the types of stemmers
+
+# create stem dictionary
 
 
 def createDictionary(wordtype, stemmer):
@@ -99,17 +115,21 @@ positiveSnowball = createDictionary('positive', 'snowball')
 negativeSnowball = createDictionary('positive', 'snowball')
 positiveLancaster = createDictionary('positive', 'lancaster')
 negativeLancaster = createDictionary('positive', 'lancaster')
+
+# create original dictionary
 positive = set(positive)
 negative = set(negative)
 
 # create statement by statement data set of the speech
-
+len(statement)  # check the length
+# 167
 # create empty list
 obs = {}
 # start with 0. count tracks the statement number
 count = 0
 for i in statement:  # loop through all the statement
     print "Statement number = " + str(count)
+    # create keys for each statement
     obs[i] = {}
     # 1) count is the statement number
     obs[i]["statementNumber"] = count
@@ -118,23 +138,23 @@ for i in statement:  # loop through all the statement
     # remove punctuation,
     words = re.sub("\W", " ", i)
     # remove capitalization
-    words = words.lower()
+    words2 = words.lower()
     # remove stop words - url doesn't work
     # tokenize the words using nltk
-    words = nltk.word_tokenize(words)
+    words3 = nltk.word_tokenize(words2)  # = unigram
     # find number of unstemmed words present in each dictionary
-    obs[i]["NumPositive"] = len([x for x in words if x in positive])
-    obs[i]["NumNegative"] = len([x for x in words if x in negative])
+    obs[i]["NumPositive"] = len([x for x in words3 if x in positive])
+    obs[i]["NumNegative"] = len([x for x in words3 if x in negative])
     # find number of porter stemmed words in each dictionary
-    porter_words = [porter.stem(w) for w in words]
+    porter_words = [porter.stem(w) for w in words3]
     obs[i]["NumPorterPositive"] = len([x for x in porter_words if x in positivePorter])
     obs[i]["NumPorterNegative"] = len([x for x in porter_words if x in negativePorter])
     # find number of snowball stemmed words in each dictionary
-    snowball_words = [snowball.stem(w) for w in words]
+    snowball_words = [snowball.stem(w) for w in words3]
     obs[i]["NumSnowPositive"] = len([x for x in snowball_words if x in positiveSnowball])
     obs[i]["NumSnowNegative"] = len([x for x in snowball_words if x in negativeSnowball])
     # find number of snowball stemmed words in each dictionary
-    lancaster_words = [lancaster.stem(w) for w in words]
+    lancaster_words = [lancaster.stem(w) for w in words3]
     obs[i]["NumLanPositive"] = len([x for x in lancaster_words if x in positiveLancaster])
     obs[i]["NumLanNegative"] = len([x for x in lancaster_words if x in negativeLancaster])
     # increase the count
@@ -153,3 +173,5 @@ with open("HWdebate.csv", "w") as f:
     w.writeheader()
     for j in obs.keys():
         w.writerow(obs[j])
+
+# Q. stem dictionaries do not seem to work? Not sure which part has an error

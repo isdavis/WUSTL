@@ -4,7 +4,7 @@
 ##########################
 
 
-# problem 1: find top unigrams and trigrams from the texts
+# problem 1: find top unigrams and trigrams from the press releases
 
 import os
 import re
@@ -20,6 +20,7 @@ sessions = "/Users/minheeseo/Dropbox/2017_Classes/Text-Analysis/GrimmerData/raw/
 shelby = "/Users/minheeseo/Dropbox/2017_Classes/Text-Analysis/GrimmerData/raw/Shelby"
 # create empty lists
 pressReleases = {}
+# read files using loop
 for i in [sessions, shelby]:  # loop over two folders
     for j in os.listdir(i):  # create lists for both folders
         pressReleases[j] = {}
@@ -27,11 +28,10 @@ for i in [sessions, shelby]:  # loop over two folders
         pressReleases[j]["month"] = j[2:5]
         pressReleases[j]["year"] = j[5:9]
         pressReleases[j]["author"] = re.sub("[0-9]+.txt", "", j[9:])
-        with open(i + "/" + j, "r") as fileIn:
+        with open(i + "/" + j, "r") as fileIn:  # read files
             pressReleases[j]["text"] = fileIn.read()
 
 pressReleases  # check
-# information is stored appropriarely
 
 # since the url does not work, use the stopwords from nltk.
 from nltk.corpus import stopwords
@@ -45,7 +45,7 @@ stopWords = stopWords + Add
 unigrams = {}
 trigrams = {}
 for pr in pressReleases:
-    prtext = pressReleases[pr]["text"]
+    prtext = pressReleases[pr]["text"]  # for each text
     # remove punctuation
     prtext = re.sub("\W", " ", prtext)
     # remove capitalization
@@ -60,7 +60,7 @@ for pr in pressReleases:
     tokenWord = [x for x in tokenWord if x not in stopWords]
     # find frequencies of unigram
     pressReleases[pr]["NUnigrams"] = len(tokenWord)
-    pressReleases[pr]["FUnigrams"] = {}
+    pressReleases[pr]["FUnigrams"] = {}  # will store frequency
     for i in set(tokenWord):
         count = tokenWord.count(i)
         pressReleases[pr]["FUnigrams"][i] = count
@@ -70,7 +70,7 @@ for pr in pressReleases:
             unigrams[i] = count
     trigramList = list(nltk.trigrams(tokenWord))
     pressReleases[pr]["NTrigrams"] = len(trigramList)
-    pressReleases[pr]["FTrigrams"] = {}
+    pressReleases[pr]["FTrigrams"] = {}  # will store frequency using loop
     for j in set(trigramList):
         count = trigramList.count(j)
         pressReleases[pr]["FTrigrams"][j] = count
@@ -106,6 +106,7 @@ with open("unigrams1000.csv", "w") as f:
         w.writerow(text_write)
 
 # trigram
+
 
 def Tuples(tuples):
     return ".".join(tuples)
