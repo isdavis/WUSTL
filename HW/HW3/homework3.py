@@ -9,6 +9,7 @@ import nltk
 import urllib2
 import csv
 import json
+from nltk.stem.porter import *
 
 # problem 1
 
@@ -36,7 +37,8 @@ for i in range(0, 288):
 
 # d, e
 # porter stemmer
-porter = nltk.stemmer.PorterStemmer()
+# porter = nltk.stemmer.PorterStemmer()
+porter = PorterStemmer()
 # load stopwords
 from nltk.corpus import stopwords  # use the stopwords from nltk.
 stopWords = stopwords.words('english')
@@ -102,7 +104,6 @@ positive  # check
 negative  # check
 
 # apply porter stemmer
-from nltk.stem.porter import *
 porter = PorterStemmer()
 positiveporter = [porter.stem(w) for w in positive]
 negativeporter = [porter.stem(w) for w in negative]
@@ -114,11 +115,16 @@ statement = {}
 # start with 0. count tracks the statement number
 count = 0
 for i in range(0, 288):  # loop through all the statement
-    print "Statement number = " + str(count + 1)
+    print "Statement number = " + str(count)
     # create keys for each statement
     statement[i] = {}
     # 1) count is the statement number
-    statement[i]["statementNumber"] = count
+    statement[i]["statementNumber"] = count + 1
+    # 2) publish date
+    statement[i]["pubdate"] = dat[i]['meta']['publication_day_of_month']
+    statement[i]["pubmon"] = dat[i]['meta']['publication_month']
+    # 3) desk
+    statement[i]["dsk"] = dat[i]['meta']['dsk']
     # remove punctuation,
     words = re.sub("\W", " ", str(dat[i]['body']['unigram']))
     # remove capitalization
@@ -129,14 +135,19 @@ for i in range(0, 288):  # loop through all the statement
     stem = [porter.stem(t) for t in words]
     statement[i]["NumPositivePorter"] = len([x for x in stem if x in negativeporter])
     statement[i]["NumNegativePorter"] = len([x for x in stem if x in positiveporter])
+    statement[i]["Difference"] = len([x for x in stem if x in negativeporter]) - len([x for x in stem if x in positiveporter])  # negative - positive
     # increase the count
     count += 1
 
-
-# with data now assigned to dictionary
-with open('storySentimentInfo.csv', 'wb') as f:
-    w = csv.DictWriter(f, fieldnames=('electionTiming', 'desk', 'NonstopWords',
-                                      'NposPorter', 'NnegPorter'))
+# save
+# set a working directory where positive words and negative words are saved
+os.chdir("/Users/minheeseo/Dropbox/2017_Classes/Text-Analysis/WUSTL/HW/HW3/")
+# write as a csv file
+with open("NYTAnalysis.csv", "wb") as f:
+    w = csv.DictWriter(f, fieldnames=["Difference", "NumNegativePorter", "NumPositivePorter", "dsk", "pubdate", "pubmon", "statementNumber"])
     w.writeheader()
-    for item in storyCharacteristics:
-        w.writerow(item)
+    for j in statement.keys():
+        w.writerow(statement[j])
+
+
+# c) in R script

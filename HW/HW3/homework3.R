@@ -127,3 +127,83 @@ ReadNYTFunc <- function(m){
 
 ReadNYTFunc(2) # lines are truncated
 
+# for problem 2 part c
+#clean up
+rm(list=ls())
+
+#load data
+setwd('~/Dropbox/2017_Classes/Text-Analysis/WUSTL/HW/HW3/')
+
+# read data
+NYTimes <- read.csv("NYTAnalysis.csv", header=T,row.names=NULL)
+# check data
+str(NYTimes)
+# before the election=0. Election on Nov 2nd
+NYTimes$election <- NA
+NYTimes$election[NYTimes$pubdate==1] <- 0
+NYTimes$election[NYTimes$pubdate!=1] <- 1
+NYTimes$election <- as.factor(NYTimes$election)
+# re-evaluate the change variable
+NYTimes$positive <- -(NYTimes$Difference)
+# fit a model
+mod1 <- lm(Difference ~ election + dsk, NYTimes)
+summary(mod1)
+# expectation: more negative words rate before the election
+# result: election treatment is not reliable. However, it seems like Editorial Desk, Foreign Desk, and National Desk seem to have more positive words than other categories.
+
+
+# Part 3. Run naive bayes
+# subset particular dsk
+table(NYTimes$dsk)
+# Business/Financial Desk          Editorial Desk            Foreign Desk        Health & Fitness 
+# 56                      19                      33                       7 
+# Metropolitan Desk           National Desk            Science Desk             Sports Desk 
+# 6                      76                       6                      43 
+# The Arts/Cultural Desk 
+# 42 
+subdat <- subset(NYTimes, NYTimes$dsk=="Business/Financial Desk" | NYTimes$dsk=="National Desk")
+table(subdat$dsk)
+subdat$dsk <- factor(subdat$dsk)
+table(subdat$dsk)
+head(subdat)
+subdat <- subdat[,-c(1,5,6,7)]
+subdat <- subdat[,-c(5)]
+# leave one out CV, calculate NB
+library(caret)
+library(klaR)
+library(e1071)
+set.seed(1234)
+library(e1071)
+
+p <- rep(NA, nrow(subdat))
+for(i in 1:nrow(subdat)){
+  model <- naiveBayes(subdat$dsk[-i] ~.,data=subdat[-i,])
+  p[i] <- predict(model, subdat[i,-3], type = "raw") # raw will give me a probability
+}
+mean(p) # average prediction
+0.4282862 # does this mean naive bayes predicted about 43%?
+
+# c) 
+
+# ## 65% of the sample size
+size <- floor(0.65 * nrow(subdat))
+index <- sample(seq_len(nrow(subdat)), size = size)
+levels(subdat$dsk) <- make.names(levels(factor(subdat$dsk)))
+traindat <- data.matrix(subdat[index,-3])
+test <- subdat[-index,-3]
+y.train <- factor(subdat[index,3])
+y.test <- factor(subdat[-index,3])
+library(MASS)  
+library(glmnet) 
+# fit the model
+# 10-fold Cross validation for each alpha = 0, 0.1, ... , 0.9, 1.0
+fit.lasso.cv <- cv.glmnet(x=traindat, y.train, type.measure="mse", alpha=1, 
+                          family="binomial")
+fit.ridge.cv <- cv.glmnet(traindat, y.train, type.measure="mse", alpha=0,
+                          family="binomial")
+# predict
+pred.lasso <- predict(fit.lasso.cv, y.test, newx=test)
+pred.ridge <- predict(fit.ridge.cv, y.test, newx=test)
+
+# conclusion: 
+
