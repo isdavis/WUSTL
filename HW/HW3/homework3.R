@@ -190,20 +190,44 @@ size <- floor(0.65 * nrow(subdat))
 index <- sample(seq_len(nrow(subdat)), size = size)
 levels(subdat$dsk) <- make.names(levels(factor(subdat$dsk)))
 traindat <- data.matrix(subdat[index,-3])
-test <- subdat[-index,-3]
+test <- data.matrix(subdat[-index,-3])
 y.train <- factor(subdat[index,3])
+y.train <- as.numeric(y.train)-1
 y.test <- factor(subdat[-index,3])
+y.test <- as.numeric(y.test)
 library(MASS)  
 library(glmnet) 
 # fit the model
+fit.lasso <- glmnet(x=traindat, y.train, alpha=1, 
+                          family="binomial")
+fit.ridge <- glmnet(traindat, y.train,alpha=0,
+                          family="binomial")
 # 10-fold Cross validation for each alpha = 0, 0.1, ... , 0.9, 1.0
 fit.lasso.cv <- cv.glmnet(x=traindat, y.train, type.measure="mse", alpha=1, 
                           family="binomial")
+
 fit.ridge.cv <- cv.glmnet(traindat, y.train, type.measure="mse", alpha=0,
                           family="binomial")
+# par(mfrow=c(2,2))
+# plot (fit.lasso.cv)
+# plot (fit.ridge.cv)
+# plot (log (fit.lasso.cv$lambda), fit.lasso.cv$cvm, pch= 10, col="red", xlab = "log(Lambda)", ylab= fit.lasso.cv$name)
+# points(log(fit.ridge.cv$lambda), fit.ridge.cv$cvm, pch= 10, col = "blue")
+# legend ("topleft", legend = c("alpha=1", "alpha= 0"), pch= 19, col = c("red",  "blue"))
 # predict
-pred.lasso <- predict(fit.lasso.cv, y.test, newx=test)
-pred.ridge <- predict(fit.ridge.cv, y.test, newx=test)
+#' Make predictions on validation dataset 
+yhat0 <- predict(fit.lasso.cv, s=fit.lasso.cv$lambda.1se, newx=test)
+yhat1 <- predict(fit.ridge.cv, s=fit.ridge.cv$lambda.1se, newx=test)
+
+mse.lasso <- mean(((y.test-1) - yhat0)^2)
+# 0.42974
+mse.ridge <- mean(((y.test-1) - yhat1)^2)
+# 0.4548091
 
 # conclusion: 
+Lasso: 42.974%
+Ridge: 45.481%
+Naive Bayes: 42.82862%
 
+# Overall, all methods seem to return similar result. More accurately, Ridge approach is the most accurate, followed by Lasso and by NB.
+# Q. Is this conclusion correct?
