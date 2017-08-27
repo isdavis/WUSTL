@@ -36,7 +36,7 @@ for i in range(0, 288):
 
 # d, e
 # porter stemmer
-porter = nltk.stem.PorterStemmer()
+porter = nltk.stemmer.PorterStemmer()
 # load stopwords
 from nltk.corpus import stopwords  # use the stopwords from nltk.
 stopWords = stopwords.words('english')
@@ -93,3 +93,50 @@ with open('DTM_NYTimes.csv', 'wb') as my_text:  # wb for csv file.
 
 
 # problem 2
+
+# a)
+# import positive and negative words
+positive = urllib2.urlopen("http://www.unc.edu/~ncaren/haphazard/positive.txt").read().split("\n")
+negative = urllib2.urlopen("http://www.unc.edu/~ncaren/haphazard/negative.txt").read().split("\n")
+positive  # check
+negative  # check
+
+# apply porter stemmer
+from nltk.stem.porter import *
+porter = PorterStemmer()
+positiveporter = [porter.stem(w) for w in positive]
+negativeporter = [porter.stem(w) for w in negative]
+
+
+# b)
+
+statement = {}
+# start with 0. count tracks the statement number
+count = 0
+for i in range(0, 288):  # loop through all the statement
+    print "Statement number = " + str(count + 1)
+    # create keys for each statement
+    statement[i] = {}
+    # 1) count is the statement number
+    statement[i]["statementNumber"] = count
+    # remove punctuation,
+    words = re.sub("\W", " ", str(dat[i]['body']['unigram']))
+    # remove capitalization
+    words = words.lower()
+    # tokenize the words using nltk
+    words = nltk.word_tokenize(words)  # = unigram
+    # 2) positive score
+    stem = [porter.stem(t) for t in words]
+    statement[i]["NumPositivePorter"] = len([x for x in stem if x in negativeporter])
+    statement[i]["NumNegativePorter"] = len([x for x in stem if x in positiveporter])
+    # increase the count
+    count += 1
+
+
+# with data now assigned to dictionary
+with open('storySentimentInfo.csv', 'wb') as f:
+    w = csv.DictWriter(f, fieldnames=('electionTiming', 'desk', 'NonstopWords',
+                                      'NposPorter', 'NnegPorter'))
+    w.writeheader()
+    for item in storyCharacteristics:
+        w.writerow(item)

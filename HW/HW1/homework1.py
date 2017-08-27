@@ -78,6 +78,7 @@ positive  # check
 negative  # check
 
 # use various stemmers from the nltk package
+from nltk.stem.porter import *
 porter = nltk.stem.PorterStemmer()
 snowball = nltk.stem.SnowballStemmer('english')
 lancaster = nltk.stem.LancasterStemmer()
@@ -91,30 +92,12 @@ lancaster = nltk.stem.LancasterStemmer()
 # create stem dictionary
 
 
-def createDictionary(wordtype, stemmer):
-    if wordtype == 'positive':
-        if stemmer == 'porter':
-            output = {porter.stem(w) for w in positive}
-        elif stemmer == 'snowball':
-            output = {snowball.stem(w) for w in positive}
-        elif stemmer == 'lancaster':
-            output = {lancaster.stem(w) for w in positive}
-    else:
-        if stemmer == 'porter':
-            output = {porter.stem(w) for w in negative}
-        elif stemmer == 'snowball':
-            output = {snowball.stem(w) for w in negative}
-        elif stemmer == 'lancaster':
-            output = {lancaster.stem(w) for w in negative}
-    return [output]
-
-
-positivePorter = createDictionary('positive', 'porter')
-negativePorter = createDictionary('positive', 'porter')
-positiveSnowball = createDictionary('positive', 'snowball')
-negativeSnowball = createDictionary('positive', 'snowball')
-positiveLancaster = createDictionary('positive', 'lancaster')
-negativeLancaster = createDictionary('positive', 'lancaster')
+negativePorter = [porter.stem(w) for w in negative]
+positivePorter = [porter.stem(w) for w in positive]
+negativeSnowball = [snowball.stem(w) for w in negative]
+positiveSnowball = [snowball.stem(w) for w in positive]
+negativeLancaster = [lancaster.stem(w) for w in negative]
+positiveLancaster = [lancaster.stem(w) for w in positive]
 
 # create original dictionary
 positive = set(positive)
@@ -127,51 +110,47 @@ len(statement)  # check the length
 obs = {}
 # start with 0. count tracks the statement number
 count = 0
-for i in statement:  # loop through all the statement
+for i in range(0, 167):  # loop through all the statement
     print "Statement number = " + str(count)
     # create keys for each statement
     obs[i] = {}
     # 1) count is the statement number
     obs[i]["statementNumber"] = count
     # 2) speaker is capitalized
-    obs[i]["speaker"] = re.search('^[A-Z]+', i).group()
+    obs[i]["speaker"] = re.search('^[A-Z]+', statement[i]).group()
     # remove punctuation,
-    words = re.sub("\W", " ", i)
+    words = re.sub("\W", " ", statement[i])
     # remove capitalization
-    words2 = words.lower()
+    words = words.lower()
     # remove stop words - url doesn't work
     # tokenize the words using nltk
-    words3 = nltk.word_tokenize(words2)  # = unigram
+    words = nltk.word_tokenize(words)  # = unigram
     # find number of unstemmed words present in each dictionary
-    obs[i]["NumPositive"] = len([x for x in words3 if x in positive])
-    obs[i]["NumNegative"] = len([x for x in words3 if x in negative])
+    obs[i]["NumPositive"] = len([x for x in words if x in positive])
+    obs[i]["NumNegative"] = len([x for x in words if x in negative])
     # find number of porter stemmed words in each dictionary
-    porter_words = [porter.stem(w) for w in words3]
-    obs[i]["NumPorterPositive"] = len([x for x in porter_words if x in positivePorter])
-    obs[i]["NumPorterNegative"] = len([x for x in porter_words if x in negativePorter])
+    porterstem = [porter.stem(w) for w in words]
+    obs[i]["NumPorterPositive"] = len([x for x in porterstem if x in positivePorter])
+    obs[i]["NumPorterNegative"] = len([x for x in porterstem if x in negativePorter])
     # find number of snowball stemmed words in each dictionary
-    snowball_words = [snowball.stem(w) for w in words3]
-    obs[i]["NumSnowPositive"] = len([x for x in snowball_words if x in positiveSnowball])
-    obs[i]["NumSnowNegative"] = len([x for x in snowball_words if x in negativeSnowball])
+    snowstem = [snowball.stem(w) for w in words]
+    obs[i]["NumSnowPositive"] = len([x for x in snowstem if x in positiveSnowball])
+    obs[i]["NumSnowNegative"] = len([x for x in snowstem if x in negativeSnowball])
     # find number of snowball stemmed words in each dictionary
-    lancaster_words = [lancaster.stem(w) for w in words3]
-    obs[i]["NumLanPositive"] = len([x for x in lancaster_words if x in positiveLancaster])
-    obs[i]["NumLanNegative"] = len([x for x in lancaster_words if x in negativeLancaster])
+    lanstem = [lancaster.stem(w) for w in words]
+    obs[i]["NumLanPositive"] = len([x for x in lanstem if x in positiveLancaster])
+    obs[i]["NumLanNegative"] = len([x for x in lanstem if x in negativeLancaster])
     # increase the count
     count += 1
-
-# check the column names
-colnames = obs[statement[0]].keys()
-colnames  # check
 
 
 # set a working directory where positive words and negative words are saved
 os.chdir("/Users/minheeseo/Dropbox/2017_Classes/Text-Analysis/WUSTL/HW/HW1/")
 # write as a csv file
 with open("HWdebate.csv", "w") as f:
-    w = csv.DictWriter(f, delimiter=",", fieldnames=colnames)
+    w = csv.DictWriter(f, delimiter=",", fieldnames=["NumLanNegative", "NumLanPositive", "NumNegative", "NumPorterNegative", "NumPorterPositive", "NumPositive", "NumSnowNegative", "NumSnowPositive", "speaker", "statementNumber"])
     w.writeheader()
     for j in obs.keys():
         w.writerow(obs[j])
 
-# Q. stem dictionaries do not seem to work? Not sure which part has an error
+# Q. stem dictionaries do not seem to work? Not sure which part has an error - previous function was not working. Fixed.

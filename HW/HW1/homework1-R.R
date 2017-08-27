@@ -13,14 +13,14 @@ str(debate)
 ##compare overall positive and negative word rate
 PosRate<-with(debate, tapply(NumPositive, speaker, mean))
 PosRate
-# LEHRER    OBAMA   ROMNEY 
-# 1.092308 8.575000 6.320755 
+LEHRER    OBAMA   ROMNEY 
+1.013699 8.575000 6.203704 
 # Obama's has the highest rate, followed by Romney and Lehrer.
 
 NegRate<-with(debate, tapply(NumNegative, speaker, mean))
 NegRate
-# LEHRER     OBAMA    ROMNEY 
-# 0.5384615 2.7500000 2.4528302 
+LEHRER     OBAMA    ROMNEY 
+0.4657534 2.7500000 2.4074074
 # Obama's has the highest rate, followed by Romney and Lehrer. Unlike previous one, the difference between Obama and Romney is minimal.
 
 ## Visualize ##
@@ -57,13 +57,14 @@ for (k in 2:nrow(debate)){
 }
 previousNegRate<-with(debate, tapply(previousNegRate, speaker, mean))
 previousNegRate
-# LEHRER    OBAMA   ROMNEY 
-# NA 3.900000 2.641509 
+LEHRER    OBAMA   ROMNEY 
+NA 3.300000 1.685185 
 previousPosRate<-with(debate, tapply(previousPosRate, speaker, mean))
 previousPosRate
-# LEHRER     OBAMA    ROMNEY 
-# NA 1.7000000 0.9245283 
-# Obama is more responsive than Romney
+LEHRER     OBAMA    ROMNEY 
+NA 1.3750000 0.6296296 
+
+# Obama is more responsive than Romney. In addition, their negative response rates are similar. Obama's positive response rate is a lot higher than Romney's.
 
 mod1<- lm(NumNegative~previousPosRate + previousNegRate, debate)
 summary(mod1)
